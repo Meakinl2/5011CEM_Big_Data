@@ -6,10 +6,11 @@ import dask.dataframe as dd
 from dask.distributed import Client
 
 import time
-from numpy import *
+import numpy as np
 import matplotlib as mt
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from scipy import stats
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 # Section A
@@ -100,7 +101,7 @@ def week32_dist_mean(dataframe):
 
 # Histogram for weekly number of people staying at home
 def weekly_home_hist(data):
-    bins = [10000000 * i for i in range(11)] # Creating Histogram bins
+    bins = [10000000 * i for i in range(4,13)] # Creating Histogram bins
 
     # Histogram Setup and Customisation
     plt.hist(data, bins = bins, facecolor = '#2ab0ff', edgecolor = '#000000', linewidth = 2)
@@ -110,17 +111,15 @@ def weekly_home_hist(data):
     plt.xlabel('Number of People Staying at Home')
     plt.ylabel('Frequency')
 
-
 # Histogram for frequency of 
 def weekly_dist_bar(data):
     # Histogram Setup and Customisation
     plt.bar(data.keys(), data.values(), facecolor = '#2ab0ff', edgecolor = '#000000', linewidth = 2)
     plt.gcf().axes[0].yaxis.get_major_formatter().set_scientific(False)
 
-    plt.title('Frequency of Average Weekly People Staying at Home')
-    plt.xlabel('Number of People Staying at Home')
+    plt.title('Frequency of Different Trip Distances in Week 32')
+    plt.xlabel('Distance Ranges')
     plt.ylabel('Frequency')
-
 
 # Runs the required to code to the desire outcomes for Section A
 def section_A(ddf_num, ddf_dist):
@@ -172,7 +171,7 @@ def min_trips(dataframe, level, specific = None):
 
 # Find days with a miniimum of 10000000 people taking 10-25 trips on a National Level
 def min_trips_national(partition):
-    data = partition[(partition.Number_of_Trips_10_25 >= 10000000)][["Number_of_Trips_10_25", "Number_of_Trips_25_50"]]
+    data = partition[(partition.Number_of_Trips_10_25 >= 10000000)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_25_50"]]
     return data
 
 # Find days with a miniimum of 10000000 people taking 10-25 trips in a given State
@@ -191,6 +190,11 @@ def trip_len_scatter(xdata,ydata):
     plt.scatter(xdata, ydata, facecolor = '#2ab0ff', edgecolor = '#169acf', alpha = 0.5)
     plt.ticklabel_format(useOffset=False, style='plain')
 
+    best_coef = np.polyfit(xdata,ydata,1)
+    best_points = np.poly1d(best_coef)
+
+    plt.plot(xdata,best_points(xdata),"r--")
+
     plt.title('Number of People doing between 10-25 Trips vs Number of People doing between 25-50 Trips')
     plt.xlabel('Number of People doing 10-25 Trips')
     plt.ylabel('Number of People doing 25-50 Trips')
@@ -200,6 +204,10 @@ def section_B(ddf_num):
     start_time = time.time()
 
     data = min_trips(ddf_num, 'National')
+    dates = data["Date"].tolist()
+
+    print(f"Dates that >10000000 did 10-25 trips: \n {dates}")
+
     trips10 = data["Number_of_Trips_10_25"].tolist()
     trips25 = data["Number_of_Trips_25_50"].tolist()
 
@@ -216,19 +224,28 @@ def section_B(ddf_num):
 # Generated a subplot for with a given combination of columns from both tables
 def scatter_sub(trips_dist,trips_num,plot_args):
     print(f"Started: {plot_args[2]}")
-    xdata = trips_dist[plot_args[0]]
-    ydata = trips_num[plot_args[1]]
-    plt.ioff()
-    plt.scatter(xdata, ydata, facecolor = '#2ab0ff', edgecolor = '#169acf')
-    plt.xlabel(plot_args[0])
-    plt.ylabel(plot_args[1])
-    plt.savefig(f'Plots/Distance_Scatters/plot{plot_args[2]}.png', bbox_inches='tight', pad_inches=0)
+    try:
+        xdata = np.array(trips_dist[plot_args[0]])
+        ydata = np.array(trips_num[plot_args[1]])
+        
+        plt.figure().clear()
+
+        plt.ioff()
+        plt.scatter(xdata, ydata, facecolor = '#2ab0ff', edgecolor = '#169acf')
+
+        grad, intc, r, p, std_er = stats.linregress(xdata,ydata)
+        lin_reg = np.poly1d([grad,intc])
+        plt.plot(xdata, lin_reg(xdata), "r--")
+
+        plt.xlabel(plot_args[0])
+        plt.ylabel(plot_args[1])
+        plt.savefig(f'Plots/Distance_Scatters/plot{plot_args[2]}.png', bbox_inches='tight', pad_inches=0)
+    except Exception as Error: 
+        print(f"Error {Error} on {plot_args[2]}")
     print(f"Finished: {plot_args[2]}")
 
 # Generates all the plots for the all the combinations of trips distance and trips num
 def distance_model(trips_num, trips_dist):
-    start_time = time.time()
-
     num_cols = ['Number_of_Trips_1_3','Number_of_Trips_3_5','Number_of_Trips_5_10','Number_of_Trips_10_25','Number_of_Trips_25_50','Number_of_Trips_50_100','Number_of_Trips_100_250','Number_of_Trips_250_500','Number_of_Trips_>=500']
     trips_num = trips_num[(trips_num.Level == "National") & (trips_num.Week == 31) & (trips_num.Date.str.endswith("2019"))]
     trips_num = trips_num[num_cols]
@@ -238,8 +255,8 @@ def distance_model(trips_num, trips_dist):
 
     p = 1
     table_args = []
-    for dcol in dist_cols:
-        for ncol in num_cols:
+    for ncol in num_cols:
+        for dcol in dist_cols:
             table_args.append([dcol,ncol,p])
             p += 1
 
@@ -258,23 +275,42 @@ def distance_model(trips_num, trips_dist):
         plt.axis('off')
         plt.imshow(img)
 
-    print(f"Plot Generation Time: {round(time.time() - start_time,2)}s")
-
     plt.tight_layout()
     plt.subplots_adjust(wspace=0, hspace=0)
-    plt.show()
+    
     
 # Runs all the function for Section D    
 def section_D(ddf_num,ddf_dist):
+    start_time = time.time()
+
     distance_model(ddf_num,ddf_dist)
-    pass
+
+    print(f"Section D Plot Generation Time: {round(time.time() - start_time,2)}s")
+
+    plt.show()
+
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 # Section E
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 
-def section_E():
-    pass
+def section_E(ddf_dist):
+    start_time = time.time()
+
+    column_headers = ['Trips_<1_Mile','Trips_1_3_Miles','Trips_3_5_Miles','Trips_5_10_Miles','Trips_10_25_Miles','Trips_25_50_Miles','Trips_50_100_Miles','Trips_100_250_Miles','Trips_250_500_Miles','Trips_500+_Miles']
+    data = ddf_dist[column_headers]
+
+    dist_avgs = {}
+
+    for column in column_headers:
+        dist_avgs[column] = data[column].mean().compute()
+
+    print(dist_avgs.values())
+    plt.pie(dist_avgs.values(), labels = dist_avgs.keys())
+    plt.title("Distribution of Different Trip Distances")
+    plt.show()
+
+    
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 # Main Body
@@ -344,10 +380,10 @@ if __name__ == '__main__':
 
     print(f"\nSetup Time: {round(time.time() - setup_start_time, 5)}s")
 
-    # section_A(ddf_dist, ddf_full)
+    section_A(ddf_dist, ddf_full)
 
     # section_B(ddf_dist)
 
-    section_D(ddf_dist, ddf_full)
+    # section_D(ddf_dist, ddf_full)
 
-    # section_E(ddf_dist, ddf_full)
+    # section_E(ddf_full)
