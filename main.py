@@ -101,7 +101,7 @@ def week32_dist_mean(dataframe):
 
 # Histogram for weekly number of people staying at home
 def weekly_home_hist(data):
-    bins = [10000000 * i for i in range(4,13)] # Creating Histogram bins
+    bins = [5000000 * i for i in range(8,26)] # Creating Histogram bins
 
     # Histogram Setup and Customisation
     plt.hist(data, bins = bins, facecolor = '#2ab0ff', edgecolor = '#000000', linewidth = 2)
@@ -110,6 +110,10 @@ def weekly_home_hist(data):
     plt.title('Frequency of Average Weekly People Staying at Home')
     plt.xlabel('Number of People Staying at Home')
     plt.ylabel('Frequency')
+
+    plt.gcf().set_size_inches(25,13.8)
+    plt.tight_layout()
+    plt.savefig('Plots/A_People_Staying_at_Home_Hist.png', dpi = 100)
 
 # Histogram for frequency of 
 def weekly_dist_bar(data):
@@ -120,6 +124,10 @@ def weekly_dist_bar(data):
     plt.title('Frequency of Different Trip Distances in Week 32')
     plt.xlabel('Distance Ranges')
     plt.ylabel('Frequency')
+
+    plt.gcf().set_size_inches(25,14)
+    plt.tight_layout()
+    plt.savefig('Plots/A_Week32_Dist_Bar.png', dpi = 100)
 
 # Runs the required to code to the desire outcomes for Section A
 def section_A(ddf_num, ddf_dist):
@@ -135,7 +143,8 @@ def section_A(ddf_num, ddf_dist):
 
     print(f"Section A Graph 1 Time: {round(time.time() - start_time, 5)}s")
 
-    plt.show()
+    # plt.show()
+    plt.close()
 
     start_time = time.time()
 
@@ -144,7 +153,8 @@ def section_A(ddf_num, ddf_dist):
 
     print(f"Section A Graph 2 Time: {round(time.time() - start_time, 5)}s")
 
-    plt.show()
+    # plt.show()
+    plt.close()
     
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
@@ -171,33 +181,37 @@ def min_trips(dataframe, level, specific = None):
 
 # Find days with a miniimum of 10000000 people taking 10-25 trips on a National Level
 def min_trips_national(partition):
-    data = partition[(partition.Number_of_Trips_10_25 >= 10000000)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_25_50"]]
+    data = partition[(partition.Number_of_Trips_10_25 >= 10000000)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_50_100"]]
     return data
 
 # Find days with a miniimum of 10000000 people taking 10-25 trips in a given State
 def min_trips_state(partition,state):
-    data = partition[(partition.Number_of_Trips_10_25 >= 10000000) & (partition.State_Postal_Code == state)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_25_50"]]
+    data = partition[(partition.Number_of_Trips_10_25 >= 10000000) & (partition.State_Postal_Code == state)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_50_100"]]
     return data
 
 # Find days with a miniimum of 10000000 people taking 10-25 trips in a given County
 def min_trips_county(partition,county):
     days = []
-    data = partition[(partition.Number_of_Trips_10_25 >= 10000000) & (partition.County_Name == county)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_25_50"]]
+    data = partition[(partition.Number_of_Trips_10_25 >= 10000000) & (partition.County_Name == county)][["Date", "Number_of_Trips_10_25", "Number_of_Trips_50_100"]]
     return data
 
 # Generates a scatter graph with appropriate foramtting given the x and y data
 def trip_len_scatter(xdata,ydata):
     plt.scatter(xdata, ydata, facecolor = '#2ab0ff', edgecolor = '#169acf', alpha = 0.5)
-    plt.ticklabel_format(useOffset=False, style='plain')
+    # plt.ticklabel_format(useOffset=False, style='plain')
 
     best_coef = np.polyfit(xdata,ydata,1)
     best_points = np.poly1d(best_coef)
 
     plt.plot(xdata,best_points(xdata),"r--")
 
-    plt.title('Number of People doing between 10-25 Trips vs Number of People doing between 25-50 Trips')
+    plt.title('Number of People doing between 10-25 Trips vs Number of People doing between 50-100 Trips')
     plt.xlabel('Number of People doing 10-25 Trips')
-    plt.ylabel('Number of People doing 25-50 Trips')
+    plt.ylabel('Number of People doing 50-100 Trips')
+
+    plt.gcf().set_size_inches(25,13.8)
+    plt.tight_layout()
+    plt.savefig('Plots/B_10_25_vs_50_100_Scatter.png', dpi = 100)
     
 # Runs all corresponding functions for Section B
 def section_B(ddf_num):
@@ -206,16 +220,18 @@ def section_B(ddf_num):
     data = min_trips(ddf_num, 'National')
     dates = data["Date"].tolist()
 
-    print(f"Dates that >10000000 did 10-25 trips: \n {dates}")
+    # print(f"Number of Dates that >10000000 did 10-25 trips: {len(dates)}")
+    # print(f"Dates that >10000000 did 10-25 trips: \n {dates}")
 
     trips10 = data["Number_of_Trips_10_25"].tolist()
-    trips25 = data["Number_of_Trips_25_50"].tolist()
+    trips50 = data["Number_of_Trips_50_100"].tolist()
 
-    trip_len_scatter(trips10,trips25)
+    trip_len_scatter(trips10,trips50)
 
     print(f"Section B Time: {round(time.time() - start_time, 5)}s")
 
-    plt.show()
+    # plt.show()
+    plt.close()
         
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 # Section D
@@ -223,7 +239,7 @@ def section_B(ddf_num):
 
 # Generated a subplot for with a given combination of columns from both tables
 def scatter_sub(trips_dist,trips_num,plot_args):
-    print(f"Started: {plot_args[2]}")
+    # print(f"Started: {plot_args[2]}")
     try:
         xdata = np.array(trips_dist[plot_args[0]])
         ydata = np.array(trips_num[plot_args[1]])
@@ -240,9 +256,10 @@ def scatter_sub(trips_dist,trips_num,plot_args):
         plt.xlabel(plot_args[0])
         plt.ylabel(plot_args[1])
         plt.savefig(f'Plots/Distance_Scatters/plot{plot_args[2]}.png', bbox_inches='tight', pad_inches=0)
+        plt.close()
     except Exception as Error: 
         print(f"Error {Error} on {plot_args[2]}")
-    print(f"Finished: {plot_args[2]}")
+    # print(f"Finished: {plot_args[2]}")
 
 # Generates all the plots for the all the combinations of trips distance and trips num
 def distance_model(trips_num, trips_dist):
@@ -278,6 +295,11 @@ def distance_model(trips_num, trips_dist):
     plt.tight_layout()
     plt.subplots_adjust(wspace=0, hspace=0)
     
+    plt.gcf().set_size_inches(25,13.8)
+    plt.tight_layout()
+    plt.savefig('Plots/D_Dist_Model_Scatter_Spread.png', dpi = 100)
+    plt.close()
+
     
 # Runs all the function for Section D    
 def section_D(ddf_num,ddf_dist):
@@ -285,9 +307,10 @@ def section_D(ddf_num,ddf_dist):
 
     distance_model(ddf_num,ddf_dist)
 
-    print(f"Section D Plot Generation Time: {round(time.time() - start_time,2)}s")
+    print(f"Section D Time: {round(time.time() - start_time,5)}s")
 
-    plt.show()
+    # plt.show()
+    plt.figure().clear()
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
@@ -305,13 +328,19 @@ def section_E(ddf_dist):
     for column in column_headers:
         dist_avgs[column] = data[column].mean().compute()
 
-    print(dist_avgs.values())
     plt.pie(dist_avgs.values(), labels = dist_avgs.keys())
     plt.title("Distribution of Different Trip Distances")
-    plt.show()
+    
+    plt.gcf().set_size_inches(25,13.8)
+    plt.tight_layout()
+    plt.savefig('Plots/E_Week32_Dist_Pie', dpi = 100)
+
+    print(f"Section E Time: {round(time.time() - start_time,5)}s")
+
+    # plt.show()
+    plt.close()
 
     
-
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 # Main Body
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
@@ -319,71 +348,85 @@ def section_E(ddf_dist):
 
 if __name__ == '__main__':    
 
-    setup_start_time = time.time()
+    
 
-    client = Client(threads_per_worker = 4, n_workers = 5)
+    dask.config.set({'logging.distributed': 'error'})
 
-    ddf_dist = dd.read_csv('Data/Trips_by_Distance.csv',
+    for processor in [1,5,10,15,20,25]:
+        
+        start_time = time.time()
+
+        client = Client(n_workers = processor, memory_limit = '4GB')
+
+        ddf_dist = dd.read_csv('Data/Trips_by_Distance.csv',
+                                dtype = {
+                                    "Level": "string",
+                                    "Date": "string",
+                                    "State": "string",
+                                    "FIPS": "Int64",
+                                    "State_Postal_Code": "string",
+                                    "County_FIPS": "Int64",
+                                    "County_Name": "string",
+                                    "Population_Staying_at_Home": "Int64",
+                                    "Population_Not_Staying_at_Home": "Int64",
+                                    "Number_of_Trips": "Int64",
+                                    "Number_of_Trips_<1": "Int64",
+                                    "Number_of_Trips_1_3": "Int64",
+                                    "Number_of_Trips_3_5": "Int64",
+                                    "Number_of_Trips_5_10": "Int64",
+                                    "Number_of_Trips_10_25": "Int64",
+                                    "Number_of_Trips_25_50": "Int64",
+                                    "Number_of_Trips_50_100": "Int64",
+                                    "Number_of_Trips_100_250": "Int64",
+                                    "Number_of_Trips_250_500": "Int64",
+                                    "Number_of_Trips_>=500": "Int64",
+                                    "Row_ID": "string",
+                                    "Week": "Int64",
+                                    "Month": "Int64"})
+        
+        ddf_full = dd.read_csv('Data/Trips_Full_Data.csv',
                             dtype = {
+                                "Month_of_Date": "string",
+                                "Week_of_Date": "string",
+                                "Year_of_Date": "Int64",
                                 "Level": "string",
                                 "Date": "string",
-                                "State": "string",
-                                "FIPS": "Int64",
-                                "State_Postal_Code": "string",
-                                "County_FIPS": "Int64",
-                                "County_Name": "string",
+                                "Week_Ending_Date": "string",
+                                "Trips_<1_Mile": "Int64",
+                                "People_Not_Staying_at_Home": "Int64",
                                 "Population_Staying_at_Home": "Int64",
-                                "Population_Not_Staying_at_Home": "Int64",
-                                "Number_of_Trips": "Int64",
-                                "Number_of_Trips_<1": "Int64",
-                                "Number_of_Trips_1_3": "Int64",
-                                "Number_of_Trips_3_5": "Int64",
-                                "Number_of_Trips_5_10": "Int64",
-                                "Number_of_Trips_10_25": "Int64",
-                                "Number_of_Trips_25_50": "Int64",
-                                "Number_of_Trips_50_100": "Int64",
-                                "Number_of_Trips_100_250": "Int64",
-                                "Number_of_Trips_250_500": "Int64",
-                                "Number_of_Trips_>=500": "Int64",
-                                "Row_ID": "string",
-                                "Week": "Int64",
-                                "Month": "Int64"})
-    
-    ddf_full = dd.read_csv('Data/Trips_Full_Data.csv',
-                           dtype = {
-                               "Month_of_Date": "string",
-                               "Week_of_Date": "string",
-                               "Year_of_Date": "Int64",
-                               "Level": "string",
-                               "Date": "string",
-                               "Week_Ending_Date": "string",
-                               "Trips_<1_Mile": "Int64",
-                               "People_Not_Staying_at_Home": "Int64",
-                               "Population_Staying_at_Home": "Int64",
-                               "Trips": "Int64",
-                               "Trips_1_25_Miles": "Int64",
-                               "Trips_1_3_Miles": "Int64",
-                               "Trips_10_25_Miles": "Int64",
-                               "Trips_100_250_Miles": "Int64",
-                               "Trips_100+_Miles": "Int64",
-                               "Trips_25_100_Miles": "Int64",
-                               "Trips_25_50_Miles": "Int64",
-                               "Trips_250_500_Miles": "Int64",
-                               "Trips_3_5_Miles": "Int64",
-                               "Trips_5_10_Miles": "Int64",
-                               "Trips_50_100_Miles": "Int64",
-                               "Trips_500+_Miles": "Int64"})
-    
-    global STATES, COUNTIES
-    STATES = sorted(ddf_dist['State_Postal_Code'].unique().compute().tolist()[1:])
-    COUNTIES = sorted(ddf_dist['County_Name'].unique().compute().tolist()[1:])
+                                "Trips": "Int64",
+                                "Trips_1_25_Miles": "Int64",
+                                "Trips_1_3_Miles": "Int64",
+                                "Trips_10_25_Miles": "Int64",
+                                "Trips_100_250_Miles": "Int64",
+                                "Trips_100+_Miles": "Int64",
+                                "Trips_25_100_Miles": "Int64",
+                                "Trips_25_50_Miles": "Int64",
+                                "Trips_250_500_Miles": "Int64",
+                                "Trips_3_5_Miles": "Int64",
+                                "Trips_5_10_Miles": "Int64",
+                                "Trips_50_100_Miles": "Int64",
+                                "Trips_500+_Miles": "Int64"})
 
-    print(f"\nSetup Time: {round(time.time() - setup_start_time, 5)}s")
+        global STATES, COUNTIES
+        STATES = sorted(ddf_dist['State_Postal_Code'].unique().compute().tolist()[1:])
+        COUNTIES = sorted(ddf_dist['County_Name'].unique().compute().tolist()[1:])
 
-    section_A(ddf_dist, ddf_full)
+        print(f"\nProcessor Number: {processor}")
 
-    # section_B(ddf_dist)
+        print(f"Setup Time: {round(time.time() - start_time, 5)}s")
 
-    # section_D(ddf_dist, ddf_full)
+        section_A(ddf_dist, ddf_full)
 
-    # section_E(ddf_full)
+        section_B(ddf_dist)
+
+        section_D(ddf_dist, ddf_full)
+
+        section_E(ddf_full)
+
+        client.shutdown()
+
+        print(f"Total Time: {round(time.time() - start_time, 5)}s")
+        
+        print("\n")
